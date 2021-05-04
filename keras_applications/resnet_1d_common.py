@@ -38,7 +38,7 @@ from keras_applications.imagenet_utils import _obtain_input_shape
 backend = None
 layers = None
 models = None
-keras_utils = None
+utils = None
 
 
 BASE_WEIGHTS_PATH = (
@@ -80,7 +80,7 @@ def block1(x, filters, kernel_size=3, stride=1,
     # Returns
         Output tensor for the residual block.
     """
-    bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
+    bn_axis = -1 if backend.image_data_format() == 'channels_last' else 1
 
     if conv_shortcut is True:
         shortcut = layers.Conv1D(4 * filters, 1, strides=stride,
@@ -145,7 +145,7 @@ def block2(x, filters, kernel_size=3, stride=1,
     # Returns
         Output tensor for the residual block.
     """
-    bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
+    bn_axis = -1 if backend.image_data_format() == 'channels_last' else 1
 
     preact = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                        name=name + '_preact_bn')(x)
@@ -163,7 +163,7 @@ def block2(x, filters, kernel_size=3, stride=1,
                                   name=name + '_1_bn')(x)
     x = layers.Activation('relu', name=name + '_1_relu')(x)
 
-    x = layers.ZeroPadding1D(padding=((1, 1), (1, 1)), name=name + '_2_pad')(x)
+    x = layers.ZeroPadding1D(padding=(1, 1), name=name + '_2_pad')(x)
     x = layers.Conv1D(filters, kernel_size, strides=stride,
                       use_bias=False, name=name + '_2_conv')(x)
     x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
@@ -212,7 +212,7 @@ def block3(x, filters, kernel_size=3, stride=1, groups=32,
     # Returns
         Output tensor for the residual block.
     """
-    bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
+    bn_axis = -1 if backend.image_data_format() == 'channels_last' else 1
 
     if conv_shortcut is True:
         shortcut = layers.Conv1D((64 // groups) * filters, 1, strides=stride,
@@ -336,9 +336,8 @@ def ResNet(stack_fn,
         ValueError: in case of invalid argument for `weights`,
             or invalid input shape.
     """
-    global backend, layers, models, keras_utils
-    print('pre get sub')
-    backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
+    global backend, layers, models, utils
+    backend, layers, models, utils = get_submodules_from_kwargs(kwargs)
 
     if not (weights in {'imagenet', None} or os.path.exists(weights)):
         raise ValueError('The `weights` argument should be either '
@@ -358,7 +357,7 @@ def ResNet(stack_fn,
     #                                  require_flatten=include_top,
     #                                  weights=weights)
 
-    print(type(input_tensor))
+    #print(type(input_tensor))
 
     if input_tensor is None:
         img_input = layers.Input(shape=input_shape)
@@ -368,9 +367,10 @@ def ResNet(stack_fn,
         else:
             img_input = input_tensor
 
-    print(type(img_input))
+    #print(type(img_input))
 
-    bn_axis = 3 if backend.image_data_format() == 'channels_last' else 1
+    print(backend.image_data_format())
+    bn_axis = -1 if backend.image_data_format() == 'channels_last' else 1
 
     x = layers.ZeroPadding1D(padding=(3, 3), name='conv1_pad')(img_input)
     x = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding='same', use_bias=use_bias, name='conv1_conv')(x)
@@ -402,7 +402,7 @@ def ResNet(stack_fn,
     # Ensure that the model takes into account
     # any potential predecessors of `input_tensor`.
     if input_tensor is not None:
-        inputs = keras_utils.get_source_inputs(input_tensor)
+        inputs = utils.get_source_inputs(input_tensor)
     else:
         inputs = img_input
 
@@ -417,7 +417,7 @@ def ResNet(stack_fn,
         else:
             file_name = model_name + '_weights_tf_dim_ordering_tf_kernels_notop.h5'
             file_hash = WEIGHTS_HASHES[model_name][1]
-        weights_path = keras_utils.get_file(file_name,
+        weights_path = utils.get_file(file_name,
                                             BASE_WEIGHTS_PATH + file_name,
                                             cache_subdir='models',
                                             file_hash=file_hash)
