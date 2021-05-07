@@ -55,6 +55,7 @@ __version__ = '1.0.8'
 
 
 from . import vgg16
+from . import vgg16_1d
 from . import vgg19
 from . import inception_v3
 from . import inception_resnet_v2
