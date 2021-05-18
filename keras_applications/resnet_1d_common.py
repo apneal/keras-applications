@@ -163,7 +163,7 @@ def block2(x, filters, kernel_size=3, stride=1,
                                   name=name + '_1_bn')(x)
     x = layers.Activation('relu', name=name + '_1_relu')(x)
 
-    x = layers.ZeroPadding1D(padding=(1, 1), name=name + '_2_pad')(x)
+    x = layers.ZeroPadding1D(padding=0, name=name + '_2_pad')(x)
     x = layers.Conv1D(filters, kernel_size, strides=stride,
                       use_bias=False, name=name + '_2_conv')(x)
     x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
@@ -228,7 +228,7 @@ def block3(x, filters, kernel_size=3, stride=1, groups=32,
     x = layers.Activation('relu', name=name + '_1_relu')(x)
 
     c = filters // groups
-    x = layers.ZeroPadding1D(padding=(1, 1), name=name + '_2_pad')(x)
+    x = layers.ZeroPadding1D(padding=0, name=name + '_2_pad')(x)
     x = layers.DepthwiseConv1D(kernel_size, strides=stride, depth_multiplier=c,
                                use_bias=False, name=name + '_2_conv')(x)
     kernel = np.zeros((1, 1, filters * c, filters), dtype=np.float32)
@@ -372,7 +372,7 @@ def ResNet(stack_fn,
     print(backend.image_data_format())
     bn_axis = -1 if backend.image_data_format() == 'channels_last' else 1
 
-    x = layers.ZeroPadding1D(padding=(3, 3), name='conv1_pad')(img_input)
+    x = layers.ZeroPadding1D(padding=0, name='conv1_pad')(img_input)
     x = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding='same', use_bias=use_bias, name='conv1_conv')(x)
 
     if preact is False:
@@ -380,7 +380,7 @@ def ResNet(stack_fn,
                                       name='conv1_bn')(x)
         x = layers.Activation('relu', name='conv1_relu')(x)
 
-    x = layers.ZeroPadding1D(padding=(1, 1), name='pool1_pad')(x)
+    x = layers.ZeroPadding1D(padding=0, name='pool1_pad')(x)
     x = layers.MaxPooling1D(3, strides=2, name='pool1_pool', padding='same')(x)
 
     x = stack_fn(x)
@@ -430,7 +430,7 @@ def ResNet(stack_fn,
 
 
 def ResNet50(include_top=True,
-             weights='imagenet',
+             weights=None,
              input_tensor=None,
              input_shape=None,
              pooling=None,
