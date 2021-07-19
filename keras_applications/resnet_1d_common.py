@@ -41,28 +41,6 @@ models = None
 utils = None
 
 
-BASE_WEIGHTS_PATH = (
-    'https://github.com/keras-team/keras-applications/'
-    'releases/download/resnet/')
-WEIGHTS_HASHES = {
-    'resnet50': ('2cb95161c43110f7111970584f804107',
-                 '4d473c1dd8becc155b73f8504c6f6626'),
-    'resnet101': ('f1aeb4b969a6efcfb50fad2f0c20cfc5',
-                  '88cf7a10940856eca736dc7b7e228a21'),
-    'resnet152': ('100835be76be38e30d865e96f2aaae62',
-                  'ee4c566cf9a93f14d82f913c2dc6dd0c'),
-    'resnet50v2': ('3ef43a0b657b3be2300d5770ece849e0',
-                   'fac2f116257151a9d068a22e544a4917'),
-    'resnet101v2': ('6343647c601c52e1368623803854d971',
-                    'c0ed64b8031c3730f411d2eb4eea35b5'),
-    'resnet152v2': ('a49b44d1979771252814e80f8ec446f9',
-                    'ed17cf2e0169df9d443503ef94b23b33'),
-    'resnext50': ('67a5b30d522ed92f75a1f16eef299d1a',
-                  '62527c363bdd9ec598bed41947b379fc'),
-    'resnext101': ('34fb605428fcc7aa4d62f44404c11509',
-                   '0f678c91647380debd923963594981b3')
-}
-
 def block0(x, filters, kernel_size=3, stride=1,
            conv_shortcut=True, name=None):
     """A residual block.
@@ -349,7 +327,7 @@ def ResNet(stack_fn,
            use_bias,
            model_name='resnet',
            include_top=True,
-           weights='imagenet',
+           weights=None,
            input_tensor=None,
            input_shape=None,
            pooling=None,
@@ -372,7 +350,6 @@ def ResNet(stack_fn,
         include_top: whether to include the fully-connected
             layer at the top of the network.
         weights: one of `None` (random initialization),
-              'imagenet' (pre-training on ImageNet),
               or the path to the weights file to be loaded.
         input_tensor: optional Keras tensor
             (i.e. output of `layers.Input()`)
@@ -408,15 +385,10 @@ def ResNet(stack_fn,
     global backend, layers, models, utils
     backend, layers, models, utils = get_submodules_from_kwargs(kwargs)
 
-    if not (weights in {'imagenet', None} or os.path.exists(weights)):
+    if not (weights is None or os.path.exists(weights)):
         raise ValueError('The `weights` argument should be either '
-                         '`None` (random initialization), `imagenet` '
-                         '(pre-training on ImageNet), '
+                         '`None` (random initialization), '
                          'or the path to the weights file to be loaded.')
-
-    if weights == 'imagenet' and include_top and classes != 1000:
-        raise ValueError('If using `weights` as `"imagenet"` with `include_top`'
-                         ' as true, `classes` should be 1000')
 
     # Determine proper input shape
     #input_shape = _obtain_input_shape(input_shape,
@@ -479,20 +451,7 @@ def ResNet(stack_fn,
     model = models.Model(inputs, x, name=model_name)
 
     # Load weights.
-    if (weights == 'imagenet') and (model_name in WEIGHTS_HASHES):
-        if include_top:
-            file_name = model_name + '_weights_tf_dim_ordering_tf_kernels.h5'
-            file_hash = WEIGHTS_HASHES[model_name][0]
-        else:
-            file_name = model_name + '_weights_tf_dim_ordering_tf_kernels_notop.h5'
-            file_hash = WEIGHTS_HASHES[model_name][1]
-        weights_path = utils.get_file(file_name,
-                                            BASE_WEIGHTS_PATH + file_name,
-                                            cache_subdir='models',
-                                            file_hash=file_hash)
-        by_name = True if 'resnext' in model_name else False
-        model.load_weights(weights_path, by_name=by_name)
-    elif weights is not None:
+    if weights is not None:
         model.load_weights(weights)
 
     return model
@@ -538,7 +497,7 @@ def ResNet50(include_top=True,
 
 
 def ResNet101(include_top=True,
-              weights='imagenet',
+              weights=None,
               input_tensor=None,
               input_shape=None,
               pooling=None,
@@ -558,7 +517,7 @@ def ResNet101(include_top=True,
 
 
 def ResNet152(include_top=True,
-              weights='imagenet',
+              weights=None,
               input_tensor=None,
               input_shape=None,
               pooling=None,
@@ -578,7 +537,7 @@ def ResNet152(include_top=True,
 
 
 def ResNet50V2(include_top=True,
-               weights='imagenet',
+               weights=None,
                input_tensor=None,
                input_shape=None,
                pooling=None,
@@ -598,7 +557,7 @@ def ResNet50V2(include_top=True,
 
 
 def ResNet101V2(include_top=True,
-                weights='imagenet',
+                weights=None,
                 input_tensor=None,
                 input_shape=None,
                 pooling=None,
@@ -618,7 +577,7 @@ def ResNet101V2(include_top=True,
 
 
 def ResNet152V2(include_top=True,
-                weights='imagenet',
+                weights=None,
                 input_tensor=None,
                 input_shape=None,
                 pooling=None,
@@ -638,7 +597,7 @@ def ResNet152V2(include_top=True,
 
 
 def ResNeXt50(include_top=True,
-              weights='imagenet',
+              weights=None,
               input_tensor=None,
               input_shape=None,
               pooling=None,
@@ -658,7 +617,7 @@ def ResNeXt50(include_top=True,
 
 
 def ResNeXt101(include_top=True,
-               weights='imagenet',
+               weights=None,
                input_tensor=None,
                input_shape=None,
                pooling=None,
