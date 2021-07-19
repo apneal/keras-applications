@@ -32,7 +32,7 @@ import tensorflow as tf
 from keras_applications import get_submodules_from_kwargs
 from keras_applications import imagenet_utils
 from keras_applications.imagenet_utils import decode_predictions
-from keras_applications.imagenet_utils import _obtain_input_shape
+from keras_applications.imagenet_utils import _obtain_input_shape_1d
 
 
 backend = None
@@ -391,14 +391,9 @@ def ResNet(stack_fn,
                          'or the path to the weights file to be loaded.')
 
     # Determine proper input shape
-    #input_shape = _obtain_input_shape(input_shape,
-    #                                  default_size=224,
-    #                                  min_size=32,
-    #                                  data_format=backend.image_data_format(),
-    #                                  require_flatten=include_top,
-    #                                  weights=weights)
-
-    #print(type(input_tensor))
+    input_shape = _obtain_input_shape_1d(input_shape,
+                                     min_size=32,
+                                     data_format=backend.image_data_format())
 
     if input_tensor is None:
         img_input = layers.Input(shape=input_shape)
@@ -408,9 +403,6 @@ def ResNet(stack_fn,
         else:
             img_input = input_tensor
 
-    #print(type(img_input))
-
-    print(backend.image_data_format())
     bn_axis = -1 if backend.image_data_format() == 'channels_last' else 1
 
     x = layers.ZeroPadding1D(padding=0, name='conv1_pad')(img_input)

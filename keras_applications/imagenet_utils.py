@@ -329,3 +329,47 @@ def _obtain_input_shape(input_shape,
                              'you should specify a static `input_shape`. '
                              'Got `input_shape=' + str(input_shape) + '`')
     return input_shape
+
+
+def _obtain_input_shape_1d(input_shape,
+                        min_size,
+                        data_format):
+    """Internal utility to compute/validate a model's input shape, for 1D models.
+
+    # Arguments
+        input_shape: Either None (will return the default network input shape),
+            or a user-provided shape to be validated.
+        default_size: Default input width/height for the model.
+        data_format: Image data format to use.
+
+    # Returns
+        An integer shape tuple (may include None entries).
+
+    # Raises
+        ValueError: In case of invalid argument values.
+    """
+    if input_shape is not None:
+        if data_format == 'channels_first':
+            if len(input_shape) != 2:
+                raise ValueError(
+                    '`input_shape` must be a tuple of two integers.')
+            if (input_shape[1] is not None and input_shape[1] < min_size):
+                raise ValueError('Input size must be at least ' +
+                                 str(min_size) + 'x' + str(min_size) +
+                                 '; got `input_shape=' +
+                                 str(input_shape) + '`')
+        else:
+            if len(input_shape) != 2:
+                raise ValueError(
+                    '`input_shape` must be a tuple of two integers.')
+            if (input_shape[0] is not None and input_shape[0] < min_size):
+                raise ValueError('Input size must be at least ' +
+                                 str(min_size) + 'x' + str(min_size) +
+                                 '; got `input_shape=' +
+                                 str(input_shape) + '`')
+    else:
+        if data_format == 'channels_first':
+            input_shape = (1, None)
+        else:
+            input_shape = (None, 1)
+    return input_shape
