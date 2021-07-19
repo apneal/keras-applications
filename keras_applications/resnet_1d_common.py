@@ -403,18 +403,18 @@ def ResNet(stack_fn,
         else:
             img_input = input_tensor
 
-    bn_axis = -1 if backend.image_data_format() == 'channels_last' else 1
+    bn_axis = 2 if backend.image_data_format() == 'channels_last' else 1
 
-    x = layers.ZeroPadding1D(padding=0, name='conv1_pad')(img_input)
-    x = layers.Conv1D(filters=64, kernel_size=7, strides=2, padding='same', use_bias=use_bias, name='conv1_conv')(x)
+    x = layers.ZeroPadding1D(padding=3, name='conv1_pad')(img_input)
+    x = layers.Conv1D(filters=64, kernel_size=7, strides=2, use_bias=use_bias, name='conv1_conv')(x)
 
     if preact is False:
         x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                       name='conv1_bn')(x)
         x = layers.Activation('relu', name='conv1_relu')(x)
 
-    x = layers.ZeroPadding1D(padding=0, name='pool1_pad')(x)
-    x = layers.MaxPooling1D(3, strides=2, name='pool1_pool', padding='same')(x)
+    x = layers.ZeroPadding1D(padding=1, name='pool1_pad')(x)
+    x = layers.MaxPooling1D(3, strides=2, name='pool1_pool')(x)
 
     x = stack_fn(x)
 
