@@ -19,7 +19,8 @@
   (https://github.com/facebook/fb.resnet.torch/blob/master/models/preresnet.lua)
 - [Torch ResNeXt]
   (https://github.com/facebookresearch/ResNeXt/blob/master/models/resnext.lua)
-
+- [Torch ResNet18 and ResNet34]
+  (https://github.com/pytorch/vision/blob/master/torchvision/models/resnet.py)
 """
 from __future__ import absolute_import
 from __future__ import division
@@ -57,29 +58,23 @@ def block0(x, filters, kernel_size=3, stride=1,
     # Returns
         Output tensor for the residual block.
     """
-    bn_axis = -1 if backend.image_data_format() == 'channels_last' else 1
+    bn_axis = 2 if backend.image_data_format() == 'channels_last' else 1
 
     if conv_shortcut is True:
-        #print('x', x.shape)
-        shortcut = layers.Conv1D(filters, 1 , strides=stride,
+        shortcut = layers.Conv1D(filters, 1, strides=stride, padding='SAME',
                                  name=name + '_0_conv')(x)
-        #print('shortcut', shortcut.shape)
         shortcut = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                              name=name + '_0_bn')(shortcut)
     else:
         shortcut = x
 
-    x = layers.ZeroPadding1D(padding=1)(x)
-    x = layers.Conv1D(filters, 3, strides=stride, name=name + '_1_conv')(x)
-    #print('x1', x.shape)
+    x = layers.Conv1D(filters, kernel_size, strides=stride, padding='SAME', name=name + '_1_conv')(x)
     x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_1_bn')(x)
     x = layers.Activation('relu', name=name + '_1_relu')(x)
 
-    #x = layers.ZeroPadding1D(padding=1)(x)
-    x = layers.Conv1D(filters, 3, padding='SAME',
+    x = layers.Conv1D(filters, kernel_size, padding='SAME',
                       name=name + '_2_conv')(x)
-    #print('x2', x.shape)
     x = layers.BatchNormalization(axis=bn_axis, epsilon=1.001e-5,
                                   name=name + '_2_bn')(x)
 
@@ -384,6 +379,27 @@ def ResNet18(include_top=True,
                   pooling, classes,
                   **kwargs)
 
+
+def ResNet34(include_top=True,
+             weights=None,
+             input_tensor=None,
+             input_shape=None,
+             pooling=None,
+             classes=1000,
+             **kwargs):
+    def stack_fn(x):
+        x = stack0(x, 64, 3, stride1=1, name='conv2')
+        x = stack0(x, 128, 4, name='conv3')
+        x = stack0(x, 256, 6, name='conv4')
+        x = stack0(x, 512, 3, name='conv5')
+        return x
+    return ResNet(stack_fn, False, True, 'resnet34',
+                  include_top, weights,
+                  input_tensor, input_shape,
+                  pooling, classes,
+                  **kwargs)
+
+
 def ResNet50(include_top=True,
              weights=None,
              input_tensor=None,
@@ -504,6 +520,8 @@ def ResNet152V2(include_top=True,
                   **kwargs)
 
 
+setattr(ResNet18, '__doc__', ResNet.__doc__)
+setattr(ResNet34, '__doc__', ResNet.__doc__)
 setattr(ResNet50, '__doc__', ResNet.__doc__)
 setattr(ResNet101, '__doc__', ResNet.__doc__)
 setattr(ResNet152, '__doc__', ResNet.__doc__)
