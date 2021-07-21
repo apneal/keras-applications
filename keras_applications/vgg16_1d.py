@@ -14,20 +14,12 @@ import os
 
 from . import get_submodules_from_kwargs
 from . import imagenet_utils
-from .imagenet_utils import decode_predictions
-from .imagenet_utils import _obtain_input_shape
+from .imagenet_utils import _obtain_input_shape_1d
 
 preprocess_input = imagenet_utils.preprocess_input
 
-WEIGHTS_PATH = ('https://github.com/fchollet/deep-learning-models/'
-                'releases/download/v0.1/'
-                'vgg16_weights_tf_dim_ordering_tf_kernels.h5')
-WEIGHTS_PATH_NO_TOP = ('https://github.com/fchollet/deep-learning-models/'
-                       'releases/download/v0.1/'
-                       'vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5')
 
-
-def VGG161D(include_top=True,
+def VGG16(include_top=True,
           weights=None,
           input_tensor=None,
           input_shape=None,
@@ -36,7 +28,6 @@ def VGG161D(include_top=True,
           **kwargs):
     """Instantiates the VGG16 architecture.
 
-    Optionally loads weights pre-trained on ImageNet.
     Note that the data format convention used by the model is
     the one specified in your Keras config at `~/.keras/keras.json`.
 
@@ -44,7 +35,6 @@ def VGG161D(include_top=True,
         include_top: whether to include the 3 fully-connected
             layers at the top of the network.
         weights: one of `None` (random initialization),
-              'imagenet' (pre-training on ImageNet),
               or the path to the weights file to be loaded.
         input_tensor: optional Keras tensor
             (i.e. output of `layers.Input()`)
@@ -81,22 +71,15 @@ def VGG161D(include_top=True,
     """
     backend, layers, models, keras_utils = get_submodules_from_kwargs(kwargs)
 
-    if not (weights in {'imagenet', None} or os.path.exists(weights)):
+    if not (weights is None or os.path.exists(weights)):
         raise ValueError('The `weights` argument should be either '
-                         '`None` (random initialization), `imagenet` '
-                         '(pre-training on ImageNet), '
+                         '`None` (random initialization),'
                          'or the path to the weights file to be loaded.')
 
-    if weights == 'imagenet' and include_top and classes != 1000:
-        raise ValueError('If using `weights` as `"imagenet"` with `include_top`'
-                         ' as true, `classes` should be 1000')
     # Determine proper input shape
-    #input_shape = _obtain_input_shape(input_shape,
-    #                                  default_size=224,
-    #                                  min_size=32,
-    #                                  data_format=backend.image_data_format(),
-    #                                  require_flatten=include_top,
-    #                                  weights=weights)
+    input_shape = _obtain_input_shape_1d(input_shape,
+                                     min_size=32,
+                                     data_format=backend.image_data_format())
 
     if input_tensor is None:
         img_input = layers.Input(shape=input_shape)
@@ -194,23 +177,7 @@ def VGG161D(include_top=True,
     model = models.Model(inputs, x, name='vgg16')
 
     # Load weights.
-    if weights == 'imagenet':
-        if include_top:
-            weights_path = keras_utils.get_file(
-                'vgg16_weights_tf_dim_ordering_tf_kernels.h5',
-                WEIGHTS_PATH,
-                cache_subdir='models',
-                file_hash='64373286793e3c8b2b4e3219cbf3544b')
-        else:
-            weights_path = keras_utils.get_file(
-                'vgg16_weights_tf_dim_ordering_tf_kernels_notop.h5',
-                WEIGHTS_PATH_NO_TOP,
-                cache_subdir='models',
-                file_hash='6d6bbae143d832006294945121d1f1fc')
-        model.load_weights(weights_path)
-        if backend.backend() == 'theano':
-            keras_utils.convert_all_kernels_in_model(model)
-    elif weights is not None:
+    if weights is not None:
         model.load_weights(weights)
 
     return model
